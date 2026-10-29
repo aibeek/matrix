@@ -63,9 +63,9 @@ h1 .g{color:var(--green)}
 .price small{font-size:22px;color:var(--green);margin-left:4px}
 .incl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:var(--fg);flex:1}
 .incl li{display:flex;gap:10px}
-.incl li::before{content:">";color:var(--green);flex:none}
-.incl li.off{color:var(--muted);opacity:.5;text-decoration:line-through;text-decoration-color:rgba(127,163,138,.7)}
-.incl li.off::before{content:"×";color:var(--muted)}
+.incl li::before{content:"✓";color:var(--green);flex:none;width:1em;text-align:center}
+.incl li.off{color:rgba(127,163,138,.6)}
+.incl li.off::before{content:"✕";color:var(--danger)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .btn{appearance:none;border:0;cursor:pointer;font-family:var(--body);font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;padding:15px 18px;border-radius:4px;background:var(--green);color:var(--bg);width:100%;transition:transform .12s ease,box-shadow .2s ease}
 html[lang="ka"] .btn{font-family:var(--geo);letter-spacing:.04em}
