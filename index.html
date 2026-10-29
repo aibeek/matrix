@@ -61,9 +61,12 @@ h1 .g{color:var(--green)}
 .t-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--green)}
 .price{font-family:var(--display);font-weight:900;font-size:44px;line-height:1;font-variant-numeric:tabular-nums;color:var(--fg)}
 .price small{font-size:22px;color:var(--green);margin-left:4px}
-.incl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:var(--muted);flex:1}
+.incl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:var(--fg);flex:1}
 .incl li{display:flex;gap:10px}
 .incl li::before{content:">";color:var(--green);flex:none}
+.incl li.off{color:var(--muted);opacity:.5;text-decoration:line-through;text-decoration-color:rgba(127,163,138,.7)}
+.incl li.off::before{content:"×";color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .btn{appearance:none;border:0;cursor:pointer;font-family:var(--body);font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;padding:15px 18px;border-radius:4px;background:var(--green);color:var(--bg);width:100%;transition:transform .12s ease,box-shadow .2s ease}
 html[lang="ka"] .btn{font-family:var(--geo);letter-spacing:.04em}
 .btn:hover{box-shadow:0 0 24px rgba(61,255,122,.45)}
@@ -129,23 +132,34 @@ const CONFIG = {
 };
 /* ===================== */
 
+// Full list of services, shown on every ticket. Items not in a ticket's "incl" are struck through.
+const SERVICES = [
+  { id:"entry",  ka:"შესვლა 17:00-დან", en:"Entry from 17:00", ru:"Вход с 17:00" },
+  { id:"immersion", ka:"ჩაძირვის ზონა", en:"Immersion zone", ru:"Зона погружения" },
+  { id:"buffet", ka:"ფურშეტი", en:"Buffet", ru:"Фуршет" },
+  { id:"photo",  ka:"ფოტო/ვიდეო სესიები", en:"Photo/video sessions", ru:"Фото/видео сессии" },
+  { id:"theatre", ka:"თეატრალური დადგმა", en:"Theatrical performance", ru:"Актёрская постановка" },
+  { id:"orchestra", ka:"ორკესტრი", en:"Orchestra", ru:"Оркестр" },
+  { id:"bar",    ka:"ბარი", en:"Bar", ru:"Бар" },
+  { id:"dj",     ka:"DJ სეტი", en:"DJ set", ru:"DJ-сет" },
+  { id:"lounge", ka:"ლაუნჯ ზონა", en:"Lounge zone", ru:"Lounge-зона" },
+  { id:"voucher", ka:"100 ლარიანი ვაუჩერი", en:"100 GEL voucher", ru:"Ваучер на 100 лари" }
+];
+
+const ALL = SERVICES.map(s => s.id);
+
 const TICKETS = [
   { id:"djset", name:"DJ SET", price:90,
-    incl:{ ka:["შესვლა 22:00-დან","ბარი"],
-           en:["Entry from 22:00","Bar"],
-           ru:["Вход с 22:00","Бар"] } },
+    incl:["entry","bar","dj"],
+    // DJ SET entry starts later; this replaces the "entry" line on its card.
+    entry:{ ka:"შესვლა 22:00-დან", en:"Entry from 22:00", ru:"Вход с 22:00" } },
   { id:"full", name:"Full Experience", price:180,
-    incl:{ ka:["შესვლა 17:00-დან","ჩაძირვის ზონა","ფურშეტი","ფოტო/ვიდეო სესიები","თეატრალური დადგმა","ორკესტრი","ბარი","DJ სეტი"],
-           en:["Entry from 17:00","Immersion zone","Buffet","Photo/video sessions","Theatrical performance","Orchestra","Bar","DJ set"],
-           ru:["Вход с 17:00","Зона погружения","Фуршет","Фото/видео сессии","Актёрская постановка","Оркестр","Бар","DJ-сет"] } },
-  { id:"vip", name:"VIP", price:420, vip:true,
-    incl:{ ka:["შესვლა 17:00-დან","ჩაძირვის ზონა","ფურშეტი","ფოტო/ვიდეო სესიები","თეატრალური დადგმა","ორკესტრი","ბარი","DJ სეტი","ლაუნჯ ზონა","100 ლარიანი ვაუჩერი"],
-           en:["Entry from 17:00","Immersion zone","Buffet","Photo/video sessions","Theatrical performance","Orchestra","Bar","DJ set","Lounge zone","100 GEL voucher"],
-           ru:["Вход с 17:00","Зона погружения","Фуршет","Фото/видео сессии","Актёрская постановка","Оркестр","Бар","DJ-сет","Lounge-зона","Ваучер на 100 лари"] } }
+    incl:ALL.filter(id => id !== "lounge" && id !== "voucher") },
+  { id:"vip", name:"VIP", price:420, vip:true, incl:ALL }
 ];
 
 const T = {
-  ka:{ eyebrow:"დახურული წვეულება", dateLabel:"თარიღი", placeLabel:"ადგილი", tickets:"ბილეთები", buy:"ყიდვა", maxTag:"მაქსიმუმი",
+  ka:{ notIncl:"არ შედის", eyebrow:"დახურული წვეულება", dateLabel:"თარიღი", placeLabel:"ადგილი", tickets:"ბილეთები", buy:"ყიდვა", maxTag:"მაქსიმუმი",
        checkoutTitle:"ბილეთის შეძენა", first:"სახელი", last:"გვარი", dob:"დაბადების თარიღი", email:"ელ. ფოსტა",
        agreeRefund:"ვეთანხმები", refund:"თანხის დაბრუნების პირობებს", agreePrivacy:"ვეთანხმები", privacy:"კონფიდენციალურობის პოლიტიკას",
        qrInfo:"გადახდის შემდეგ QR ბილეთი გამოგეგზავნებათ მითითებულ ელ. ფოსტაზე.",
@@ -157,7 +171,7 @@ const T = {
        refundBody:["ბილეთის დაბრუნება შესაძლებელია ღონისძიებამდე 7 დღით ადრე. თანხა ბრუნდება იმავე ბარათზე 10 სამუშაო დღის განმავლობაში.","ღონისძიებამდე 7 დღეზე ნაკლები დროით ადრე ბილეთი არ ბრუნდება.","ღონისძიების გაუქმების შემთხვევაში თანხა სრულად ბრუნდება."],
        privacyTitle:"კონფიდენციალურობის პოლიტიკა",
        privacyBody:["ჩვენ ვაგროვებთ მხოლოდ თქვენს სახელს, გვარს და ელ. ფოსტას, რათა გამოგიგზავნოთ ბილეთი და ინფორმაცია ღონისძიების შესახებ.","მონაცემები არ გადაეცემა მესამე პირებს, გარდა ბანკისა, რომელიც ამუშავებს გადახდას.","მონაცემების წაშლის მოთხოვნით დაგვიკავშირდით ორგანიზატორებს."] },
-  en:{ eyebrow:"Private party", dateLabel:"Date", placeLabel:"Place", tickets:"Tickets", buy:"Buy", maxTag:"Everything included",
+  en:{ notIncl:"not included", eyebrow:"Private party", dateLabel:"Date", placeLabel:"Place", tickets:"Tickets", buy:"Buy", maxTag:"Everything included",
        checkoutTitle:"Buy a ticket", first:"First name", last:"Last name", dob:"Date of birth", email:"Email",
        agreeRefund:"I agree to the", refund:"refund policy", agreePrivacy:"I agree to the", privacy:"privacy policy",
        qrInfo:"After payment, your QR ticket will be sent to this email.",
@@ -169,7 +183,7 @@ const T = {
        refundBody:["You can return a ticket up to 7 days before the event. The money goes back to the same card within 10 business days.","Tickets cannot be returned less than 7 days before the event.","If the event is cancelled, you get a full refund."],
        privacyTitle:"Privacy policy",
        privacyBody:["We only collect your first name, last name and email to send you the ticket and event updates.","We do not share your data with third parties, except the bank that processes the payment.","To have your data deleted, contact the organizers."] },
-  ru:{ eyebrow:"Закрытая вечеринка", dateLabel:"Дата", placeLabel:"Место", tickets:"Билеты", buy:"Купить", maxTag:"Всё включено",
+  ru:{ notIncl:"не входит", eyebrow:"Закрытая вечеринка", dateLabel:"Дата", placeLabel:"Место", tickets:"Билеты", buy:"Купить", maxTag:"Всё включено",
        checkoutTitle:"Покупка билета", first:"Имя", last:"Фамилия", dob:"Дата рождения", email:"Почта",
        agreeRefund:"Я согласен(на) с", refund:"условиями возврата", agreePrivacy:"Я согласен(на) с", privacy:"политикой конфиденциальности",
        qrInfo:"После оплаты QR-билет придёт на указанную почту.",
@@ -198,8 +212,11 @@ function CodeRain(){
     const c = ref.current;
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const x = c.getContext("2d");
-    const chars = "アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789MATRIXᲛᲐᲢᲠᲘᲥᲡ";
-    let w = 0, h = 0, cols = 0, drops = [], fs = 16, raf = 0, last = 0;
+    // Each column streams either a word, letter by letter top to bottom, or random digits.
+    const words = ["MATRIX","TBILISI","EVENT"];
+    const digits = "0123456789";
+    const pick = () => Math.random() < .45 ? words[Math.floor(Math.random() * words.length)] : null;
+    let w = 0, h = 0, cols = 0, drops = [], seqs = [], pos = [], fs = 16, raf = 0, last = 0;
     function size(){
       const nw = c.clientWidth || window.innerWidth, nh = c.clientHeight || window.innerHeight;
       if (!nw || !nh) return;
@@ -210,6 +227,8 @@ function CodeRain(){
       fs = w < 500 ? 14 : 16;
       cols = Math.ceil(w / fs);
       drops = Array.from({length: cols}, () => Math.random() * h / fs - 10);
+      seqs = Array.from({length: cols}, pick);
+      pos = Array(cols).fill(0);
       x.fillStyle = "#050806"; x.fillRect(0,0,w,h);
     }
     const onOrient = () => { w = 0; setTimeout(size, 200); };
@@ -228,11 +247,12 @@ function CodeRain(){
         x.fillStyle = "rgba(5,8,6,0.09)"; x.fillRect(0,0,w,h);
         x.font = fs + "px 'IBM Plex Mono', monospace";
         for (let i = 0; i < cols; i++){
-          const ch = chars[Math.floor(Math.random() * chars.length)];
+          const word = seqs[i];
+          const ch = word ? word[pos[i]++ % word.length] : digits[Math.floor(Math.random() * 10)];
           const y = drops[i] * fs;
           x.fillStyle = Math.random() > .975 ? "#d9f2df" : "#3dff7a";
           x.fillText(ch, i * fs, y);
-          if (y > h && Math.random() > .975) drops[i] = 0;
+          if (y > h && Math.random() > .975){ drops[i] = 0; seqs[i] = pick(); pos[i] = 0; }
           drops[i] += 1;
         }
       }
@@ -259,7 +279,11 @@ function TicketCard({ ticket, lang, t, onBuy }){
       </div>
       <div className="price">{ticket.price}<small>{CONFIG.currency}</small></div>
       <ul className="incl">
-        {ticket.incl[lang].map(item => <li key={item}>{item}</li>)}
+        {SERVICES.map(s => {
+          const on = ticket.incl.includes(s.id);
+          const label = s.id === "entry" && ticket.entry ? ticket.entry[lang] : s[lang];
+          return <li key={s.id} className={on ? "" : "off"}>{label}{!on && <span className="sr"> ({t("notIncl")})</span>}</li>;
+        })}
       </ul>
       <button className="btn" type="button" onClick={e => onBuy(ticket, e.currentTarget)}>{t("buy")}</button>
     </article>
