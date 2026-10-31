@@ -35,20 +35,39 @@ img{max-width:100%}
 @media (max-width:640px){#rain{opacity:.7}}
 .wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 48px;display:flex;flex-direction:column;gap:40px}
 
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.mark{font-family:var(--body);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--green)}
+.top{display:flex;justify-content:flex-end;align-items:center;gap:12px}
 .langs{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:rgba(11,18,13,.8)}
 .langs button{all:unset;cursor:pointer;font-family:var(--body);font-size:12px;font-weight:600;letter-spacing:.08em;padding:8px 12px;color:var(--muted)}
 .langs button[aria-pressed="true"]{background:var(--green);color:var(--bg)}
 .langs button:focus-visible{outline:2px solid var(--green);outline-offset:-2px}
 
-.hero{display:flex;flex-direction:column;gap:14px;padding-top:24px}
+/* Hero grid: title block left, video right on every width; the text goes under both on phones, under the title on desktop. Negative margin pulls it up against the header past .wrap's gap. */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 1fr;gap:20px 14px;margin-top:-28px}
+.hero-main{display:flex;flex-direction:column;gap:14px;min-width:0}
 .eyebrow{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
-h1{margin:0;font-family:var(--display);font-weight:900;font-size:clamp(44px,13vw,112px);line-height:.92;letter-spacing:-.02em;text-wrap:balance;color:var(--fg);text-shadow:0 0 24px rgba(61,255,122,.35)}
+h1{margin:0;font-family:var(--display);font-weight:900;font-size:clamp(28px,10.2vw,112px);line-height:.92;letter-spacing:-.02em;text-wrap:balance;color:var(--fg);text-shadow:0 0 24px rgba(61,255,122,.35)}
 h1 .g{color:var(--green)}
 .meta{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px;color:var(--fg)}
 .meta span{display:inline-flex;gap:8px;align-items:center}
 .meta b{color:var(--green);font-weight:500}
+.about{grid-column:1/-1;max-width:65ch;display:flex;flex-direction:column;gap:12px;color:var(--fg);text-shadow:0 0 6px var(--bg),0 0 2px var(--bg)}
+.about p{margin:0}
+.about .end{color:var(--green);font-size:1.15em;font-weight:600}
+
+/* Video: the same element is the muted thumbnail and, when .stage gets .open, the lightbox player, so tapping it can unmute within the user gesture. .clip holds the place in the layout. */
+.clip{grid-column:2;grid-row:1;width:33vw;max-width:240px;aspect-ratio:9/16;align-self:start}
+.stage{position:relative;width:100%;height:100%;border:1px solid var(--green);border-radius:10px;overflow:hidden;background:var(--panel);box-shadow:0 0 16px rgba(61,255,122,.3)}
+.stage video{display:block;width:100%;height:100%;object-fit:cover}
+.clip-open{all:unset;position:absolute;inset:0;cursor:pointer}
+.clip-open:focus-visible{outline:2px solid var(--fg);outline-offset:-3px;border-radius:10px}
+.clip-open svg{position:absolute;right:6px;bottom:6px;width:24px;height:24px;padding:5px;border-radius:5px;background:rgba(5,8,6,.72);color:var(--green)}
+.stage.open{position:fixed;inset:0;z-index:30;width:auto;height:auto;padding:48px 16px;display:flex;align-items:center;justify-content:center;border:0;border-radius:0;box-shadow:none;background:rgba(0,0,0,.92)}
+.stage.open video{width:min(100%,calc((100vh - 96px)*9/16));width:min(100%,calc((100dvh - 96px)*9/16));height:auto;aspect-ratio:9/16;object-fit:contain;background:#000}
+.stage .x{position:absolute;top:8px;right:max(8px,env(safe-area-inset-right,0px));color:var(--fg);background:var(--panel)}
+@media (min-width:821px){
+  .clip{grid-row:1/3;width:240px}
+  .about{grid-column:1}
+}
 
 .section-h{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
 .tickets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
@@ -76,6 +95,11 @@ html[lang="ka"] .btn{font-family:var(--geo);letter-spacing:.04em}
 .btn[disabled]{background:var(--panel-2);color:var(--muted);cursor:not-allowed;box-shadow:none}
 
 .note{font-size:12.5px;color:var(--muted);max-width:62ch}
+.contact{display:flex;flex-direction:column;gap:12px;max-width:380px}
+.contact .section-h{margin:0}
+.phone{font-size:20px;font-weight:500;color:var(--fg);font-variant-numeric:tabular-nums}
+.contact-btns{display:flex;gap:10px}
+.contact-btns .btn{flex:1;min-width:0;width:auto;padding-inline:10px}
 
 /* sheet */
 .overlay{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center}
@@ -125,25 +149,28 @@ const { useState, useEffect, useRef, useCallback } = React;
 /* ===== EDIT HERE ===== */
 const CONFIG = {
   date: { ka: "თარიღი მალე", en: "To be announced", ru: "Скоро объявим" },
-  place: { ka: "თბილისი", en: "Tbilisi", ru: "Тбилиси" },
+  time: "18:00",
   currency: "₾",
+  // Contact phone, with country code. The call and WhatsApp buttons are built from it.
+  phone: "+995 XXX XX XX XX",
   // Bank payment links for each ticket. Paste the links from the bank here.
   payUrl: { djset: "", full: "", vip: "" }
 };
 /* ===================== */
 
-// Full list of services, shown on every ticket. Items not in a ticket's "incl" are struck through.
+// Full list of services, shown on every ticket. Items not in a ticket's "incl" are marked as not included.
 const SERVICES = [
-  { id:"entry",  ka:"შესვლა 17:00-დან", en:"Entry from 17:00", ru:"Вход с 17:00" },
-  { id:"immersion", ka:"ჩაძირვის ზონა", en:"Immersion zone", ru:"Зона погружения" },
-  { id:"buffet", ka:"ფურშეტი", en:"Buffet", ru:"Фуршет" },
-  { id:"photo",  ka:"ფოტო/ვიდეო სესიები", en:"Photo/video sessions", ru:"Фото/видео сессии" },
-  { id:"theatre", ka:"თეატრალური დადგმა", en:"Theatrical performance", ru:"Актёрская постановка" },
-  { id:"orchestra", ka:"ორკესტრი", en:"Orchestra", ru:"Оркестр" },
+  { id:"entry",  ka:"შესვლა 18:00-დან", en:"Entry from 18:00", ru:"Вход с 18:00" },
+  { id:"immersion", ka:"ჩაძირვის ზონა (სტილისტები, ვიზაჟისტები, აკვაგრიმი)", en:"Immersion zone (stylists, make-up artists, face painting)", ru:"Зона погружения (стилисты, визажисты, аквагрим)" },
+  { id:"photo",  ka:"ფოტო/ვიდეო ზონები", en:"Photo/video zones", ru:"Фото/видео зоны" },
+  { id:"buffet", ka:"გალა ფურშეტი", en:"Gala buffet", ru:"Гала-фуршет" },
   { id:"bar",    ka:"ბარი", en:"Bar", ru:"Бар" },
+  { id:"theatre", ka:"თეატრალური დადგმა", en:"Theatrical performance", ru:"Театральная постановка" },
+  { id:"orchestra", ka:"ცოცხალი ორკესტრი", en:"Live orchestra", ru:"Live оркестр" },
   { id:"dj",     ka:"DJ სეტი", en:"DJ set", ru:"DJ-сет" },
-  { id:"lounge", ka:"ლაუნჯ ზონა", en:"Lounge zone", ru:"Lounge-зона" },
-  { id:"voucher", ka:"100 ლარიანი ვაუჩერი", en:"100 GEL voucher", ru:"Ваучер на 100 лари" }
+  { id:"vipzone", ka:"VIP ზონა (Lounge, მე-2 და მე-3 სართული)", en:"VIP zone (Lounge, 2nd and 3rd floors)", ru:"VIP-зона (Lounge, 2 и 3 этаж)" },
+  { id:"vipdrink", ka:"VIP სპეციალური მისასალმებელი სასმელი", en:"VIP Special welcome drink", ru:"VIP Special welcome drink" },
+  { id:"vipservice", ka:"VIP სერვისი (პერსონალი, WC, გარდერობი)", en:"VIP Service (staff, WC, wardrobe)", ru:"VIP Service (staff, WC, wardrobe)" }
 ];
 
 const ALL = SERVICES.map(s => s.id);
@@ -154,12 +181,12 @@ const TICKETS = [
     // DJ SET entry starts later; this replaces the "entry" line on its card.
     entry:{ ka:"შესვლა 22:00-დან", en:"Entry from 22:00", ru:"Вход с 22:00" } },
   { id:"full", name:"Full Experience", price:180,
-    incl:ALL.filter(id => id !== "lounge" && id !== "voucher") },
-  { id:"vip", name:"VIP", price:420, vip:true, incl:ALL }
+    incl:ALL.filter(id => !id.startsWith("vip")) },
+  { id:"vip", name:"VIP", price:250, vip:true, incl:ALL }
 ];
 
 const T = {
-  ka:{ notIncl:"არ შედის", eyebrow:"დახურული წვეულება", dateLabel:"თარიღი", placeLabel:"ადგილი", tickets:"ბილეთები", buy:"ყიდვა", maxTag:"მაქსიმუმი",
+  ka:{ notIncl:"არ შედის", eyebrow:"დახურული წვეულება", dateLabel:"თარიღი", timeLabel:"დრო", tickets:"ბილეთები", buy:"ყიდვა", maxTag:"მაქსიმუმი",
        checkoutTitle:"ბილეთის შეძენა", first:"სახელი", last:"გვარი", dob:"დაბადების თარიღი", email:"ელ. ფოსტა",
        agreeRefund:"ვეთანხმები", refund:"თანხის დაბრუნების პირობებს", agreePrivacy:"ვეთანხმები", privacy:"კონფიდენციალურობის პოლიტიკას",
        qrInfo:"გადახდის შემდეგ QR ბილეთი გამოგეგზავნებათ მითითებულ ელ. ფოსტაზე.",
@@ -167,11 +194,15 @@ const T = {
        errFill:"შეავსეთ სახელი, გვარი, დაბადების თარიღი და ელ. ფოსტა.", errEmail:"შეამოწმეთ ელ. ფოსტის მისამართი.", errChecks:"მონიშნეთ ორივე პუნქტი.",
        noLink:"გადახდის ბმული ჯერ არ არის დამატებული.",
        footnote:"ბილეთი პერსონალურია. შესასვლელთან წარადგინეთ QR კოდი ელ. ფოსტიდან.",
+       about:["მოგელით დაუვიწყარი საღამო „მატრიქსის“ სამყაროში სრული ჩაძირვით: welcome-ზონა, სტილისტები და ვიზაჟისტები სტუმრების იმიჯის საბოლოო შტრიხებისთვის, თემატური აკვაგრიმი, შთამბეჭდავი ფოტო და ვიდეო ზონები და პროფესიონალური გადაღება.","გალა ფურშეტი და ბარი საღამოს ატმოსფეროს ნაწილი გახდება, პროგრამის კულმინაცია კი იქნება თეატრალური დადგმა, ორკესტრის ცოცხალი შესრულება და DJ სეტი."],
+       aboutEnd:"ერთი საღამოთი რეალობასა და მატრიქსს შორის საზღვარი გაქრება!",
+       videoOpen:"ვიდეოს გახსნა", videoClose:"ვიდეოს დახურვა",
+       contact:"დაგვიკავშირდით", call:"დარეკვა",
        refundTitle:"თანხის დაბრუნების პირობები",
        refundBody:["ბილეთის დაბრუნება შესაძლებელია ღონისძიებამდე 7 დღით ადრე. თანხა ბრუნდება იმავე ბარათზე 10 სამუშაო დღის განმავლობაში.","ღონისძიებამდე 7 დღეზე ნაკლები დროით ადრე ბილეთი არ ბრუნდება.","ღონისძიების გაუქმების შემთხვევაში თანხა სრულად ბრუნდება."],
        privacyTitle:"კონფიდენციალურობის პოლიტიკა",
        privacyBody:["ჩვენ ვაგროვებთ მხოლოდ თქვენს სახელს, გვარს და ელ. ფოსტას, რათა გამოგიგზავნოთ ბილეთი და ინფორმაცია ღონისძიების შესახებ.","მონაცემები არ გადაეცემა მესამე პირებს, გარდა ბანკისა, რომელიც ამუშავებს გადახდას.","მონაცემების წაშლის მოთხოვნით დაგვიკავშირდით ორგანიზატორებს."] },
-  en:{ notIncl:"not included", eyebrow:"Private party", dateLabel:"Date", placeLabel:"Place", tickets:"Tickets", buy:"Buy", maxTag:"Everything included",
+  en:{ notIncl:"not included", eyebrow:"Private party", dateLabel:"Date", timeLabel:"Time", tickets:"Tickets", buy:"Buy", maxTag:"Everything included",
        checkoutTitle:"Buy a ticket", first:"First name", last:"Last name", dob:"Date of birth", email:"Email",
        agreeRefund:"I agree to the", refund:"refund policy", agreePrivacy:"I agree to the", privacy:"privacy policy",
        qrInfo:"After payment, your QR ticket will be sent to this email.",
@@ -179,11 +210,15 @@ const T = {
        errFill:"Enter your first name, last name, date of birth and email.", errEmail:"Check the email address.", errChecks:"Tick both boxes to continue.",
        noLink:"The payment link has not been added yet.",
        footnote:"Tickets are personal. Show the QR code from your email at the entrance.",
+       about:["An unforgettable evening of total immersion in the world of The Matrix awaits you: a welcome zone, stylists and make-up artists to put the finishing touches on each guest's look, themed face painting, striking photo and video zones, and professional photo and video coverage.","The gala buffet and bar become part of the atmosphere of the night, and the programme builds to its climax with a theatrical performance, a live orchestra and a DJ set."],
+       aboutEnd:"For one night, the line between reality and the Matrix will disappear!",
+       videoOpen:"Expand video", videoClose:"Close video",
+       contact:"Contact us", call:"Call",
        refundTitle:"Refund policy",
        refundBody:["You can return a ticket up to 7 days before the event. The money goes back to the same card within 10 business days.","Tickets cannot be returned less than 7 days before the event.","If the event is cancelled, you get a full refund."],
        privacyTitle:"Privacy policy",
        privacyBody:["We only collect your first name, last name and email to send you the ticket and event updates.","We do not share your data with third parties, except the bank that processes the payment.","To have your data deleted, contact the organizers."] },
-  ru:{ notIncl:"не входит", eyebrow:"Закрытая вечеринка", dateLabel:"Дата", placeLabel:"Место", tickets:"Билеты", buy:"Купить", maxTag:"Всё включено",
+  ru:{ notIncl:"не входит", eyebrow:"Закрытая вечеринка", dateLabel:"Дата", timeLabel:"Время", tickets:"Билеты", buy:"Купить", maxTag:"Всё включено",
        checkoutTitle:"Покупка билета", first:"Имя", last:"Фамилия", dob:"Дата рождения", email:"Почта",
        agreeRefund:"Я согласен(на) с", refund:"условиями возврата", agreePrivacy:"Я согласен(на) с", privacy:"политикой конфиденциальности",
        qrInfo:"После оплаты QR-билет придёт на указанную почту.",
@@ -191,6 +226,10 @@ const T = {
        errFill:"Введите имя, фамилию, дату рождения и почту.", errEmail:"Проверьте адрес почты.", errChecks:"Отметьте оба пункта.",
        noLink:"Ссылка на оплату ещё не добавлена.",
        footnote:"Билет именной. На входе покажите QR-код из письма.",
+       about:["Вас ждёт незабываемый вечер полного погружения во вселенную «Матрицы»: welcome-зона, стилисты и визажисты для финальных штрихов образа гостей, тематический аквагрим, эффектные фото-видео зоны и профессиональная съёмка.","Гала-фуршет и бар станут частью атмосферы вечера, а кульминацией программы станут театральная постановка, живое выступление оркестра и DJ-сет."],
+       aboutEnd:"На один вечер граница между реальностью и Матрицей исчезнет!",
+       videoOpen:"Развернуть видео", videoClose:"Закрыть видео",
+       contact:"Связаться с нами", call:"Позвонить",
        refundTitle:"Условия возврата",
        refundBody:["Вернуть билет можно не позднее чем за 7 дней до мероприятия. Деньги вернутся на ту же карту в течение 10 рабочих дней.","Менее чем за 7 дней до мероприятия билет не возвращается.","Если мероприятие отменят, деньги вернутся полностью."],
        privacyTitle:"Политика конфиденциальности",
@@ -199,6 +238,7 @@ const T = {
 
 const LANGS = [["ka","GE"],["en","EN"],["ru","RU"]];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_DIGITS = CONFIG.phone.replace(/\D/g, "");
 
 function initialLang(){
   try { const s = localStorage.getItem("mx-lang"); if (s && T[s]) return s; } catch(e) {}
@@ -268,6 +308,59 @@ function CodeRain(){
     };
   }, []);
   return <canvas id="rain" ref={ref} aria-hidden="true" />;
+}
+
+function HeroVideo({ t }){
+  const [open, setOpen] = useState(false);
+  const videoRef = useRef(null);
+  const openRef = useRef(null);
+  const closeRef = useRef(null);
+
+  // Some mobile browsers ignore the autoplay attribute on elements created by React.
+  useEffect(() => {
+    const v = videoRef.current;
+    v.muted = true;
+    v.play().catch(() => {});
+  }, []);
+
+  // Runs inside the tap, otherwise the browser refuses to start the sound.
+  function expand(){
+    const v = videoRef.current;
+    v.currentTime = 0;
+    v.muted = false;
+    v.play().catch(() => {});
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    const v = videoRef.current;
+    const opener = openRef.current;
+    document.body.style.overflow = "hidden";
+    closeRef.current.focus();
+    const onKey = e => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKey);
+      v.muted = true;
+      v.play().catch(() => {});
+      opener.focus({ preventScroll:true });
+    };
+  }, [open]);
+
+  return (
+    <div className="clip">
+      <div className={"stage" + (open ? " open" : "")} role={open ? "dialog" : undefined} aria-modal={open ? "true" : undefined} aria-label={open ? t("videoOpen") : undefined}
+           onClick={e => { if (open && e.target === e.currentTarget) setOpen(false); }}>
+        <video ref={videoRef} src="video.mp4" autoPlay muted loop playsInline controls={open} />
+        <button className="clip-open" type="button" hidden={open} ref={openRef} aria-label={t("videoOpen")} onClick={expand}>
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" /></svg>
+        </button>
+        {open && <button className="x" type="button" ref={closeRef} aria-label={t("videoClose")} onClick={() => setOpen(false)}>×</button>}
+      </div>
+    </div>
+  );
 }
 
 function TicketCard({ ticket, lang, t, onBuy }){
@@ -414,7 +507,6 @@ function App(){
 
       <div className="wrap">
         <header className="top">
-          <div className="mark">Matrix Event</div>
           <div className="langs" role="group" aria-label="Language">
             {LANGS.map(([code, label]) => (
               <button key={code} type="button" aria-pressed={lang === code} onClick={() => setLang(code)}>{label}</button>
@@ -423,11 +515,18 @@ function App(){
         </header>
 
         <section className="hero">
-          <div className="eyebrow">{t("eyebrow")}</div>
-          <h1><span className="g">MATRIX</span><br />EVENT<br />TBILISI</h1>
-          <div className="meta">
-            <span><b>{t("dateLabel")}</b><span>{CONFIG.date[lang]}</span></span>
-            <span><b>{t("placeLabel")}</b><span>{CONFIG.place[lang]}</span></span>
+          <div className="hero-main">
+            <div className="eyebrow">{t("eyebrow")}</div>
+            <h1><span className="g">MATRIX</span><br />EVENT<br />TBILISI</h1>
+            <div className="meta">
+              <span><b>{t("dateLabel")}</b><span>{CONFIG.date[lang]}</span></span>
+              <span><b>{t("timeLabel")}</b><span>{CONFIG.time}</span></span>
+            </div>
+          </div>
+          <HeroVideo t={t} />
+          <div className="about">
+            {t("about").map((p, i) => <p key={i}>{p}</p>)}
+            <p className="end">{t("aboutEnd")}</p>
           </div>
         </section>
 
@@ -439,6 +538,15 @@ function App(){
         </section>
 
         <p className="note">{t("footnote")}</p>
+
+        <section className="contact" aria-labelledby="contact-h">
+          <h2 className="section-h" id="contact-h">{t("contact")}</h2>
+          <div className="phone">{CONFIG.phone}</div>
+          <div className="contact-btns">
+            <a className="btn" href={"tel:+" + PHONE_DIGITS}>{t("call")}</a>
+            <a className="btn ghost" href={"https://wa.me/" + PHONE_DIGITS} target="_blank" rel="noopener">WhatsApp</a>
+          </div>
+        </section>
       </div>
 
       {current && (
